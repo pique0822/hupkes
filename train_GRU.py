@@ -105,6 +105,8 @@ for epoch in range(args.num_epochs):
     if epoch%args.print_frequency == 0:
         print('Epoch '+str(epoch)+' - Loss: ',round(epoch_loss,2))
 
+        torch.save(model.state_dict(), args.model_save+'_epoch_'+str(epoch))
+
 # final test
 epoch_loss = 0
 
@@ -120,7 +122,7 @@ for training_sequence_idx in training_sequence:
 
     hidden = model.init_hidden()
 
-    X,y = dataset.get_datapoint(dataset_index, training=True)
+    X,y = datasets[training_sequence_idx].get_datapoint(dataset_index, training=True)
     X = torch.Tensor(X).reshape(args.batch_size, -1, 1).long()
     y = torch.Tensor(y).reshape(args.batch_size,-1)
 
