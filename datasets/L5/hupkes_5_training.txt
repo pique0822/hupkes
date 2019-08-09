@@ -1,0 +1,5 @@
+Epoch 0 - Loss:  22812.92
+Epoch 10 - Loss:  19621.11
+Epoch 20 - Loss:  14744.54
+Epoch 30 - Loss:  11905.86
+Epoch 40 - Loss:  9430.3
