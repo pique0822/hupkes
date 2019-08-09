@@ -55,6 +55,11 @@ L4 = Dataset('datasets/L4/data.txt', args.training_percent, args.batch_size)
 L5 = Dataset('datasets/L5/data.txt', args.training_percent, args.batch_size)
 L7 = Dataset('datasets/L7/data.txt', args.training_percent, args.batch_size)
 
+L1.set_vocabulary(L7.get_vocabulary())
+L2.set_vocabulary(L7.get_vocabulary())
+L4.set_vocabulary(L7.get_vocabulary())
+L5.set_vocabulary(L7.get_vocabulary())
+
 datasets = [L1,L2,L4,L5,L7]
 
 # defining the training sequence

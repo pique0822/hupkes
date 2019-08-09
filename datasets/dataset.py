@@ -53,6 +53,9 @@ class Dataset(object):
     def get_vocabulary(self):
         return list(self.vocabulary)
 
+    def set_vocabulary(self, vocabulary):
+        self.vocabulary = vocabulary
+
     def word2token(self, word):
         return self.vocabulary.index(word)
 
