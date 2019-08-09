@@ -55,10 +55,16 @@ L4 = Dataset('datasets/L4/data.txt', args.training_percent, args.batch_size)
 L5 = Dataset('datasets/L5/data.txt', args.training_percent, args.batch_size)
 L7 = Dataset('datasets/L7/data.txt', args.training_percent, args.batch_size)
 
-L1.set_vocabulary(L7.get_vocabulary())
-L2.set_vocabulary(L7.get_vocabulary())
-L4.set_vocabulary(L7.get_vocabulary())
-L5.set_vocabulary(L7.get_vocabulary())
+vocabulary = ['zero', 'one', 'two', 'three', 'four', 'five',
+              'six', 'seven', 'eight', 'nine', 'ten',
+              '-one',  '-two', '-three', '-four', '-five',
+              '-six', '-seven', '-eight', '-nine', '-ten',
+              '(', ')', 'plus', 'minus']
+
+L1.set_vocabulary(vocabulary)
+L2.set_vocabulary(vocabulary)
+L4.set_vocabulary(vocabulary)
+L5.set_vocabulary(vocabulary)
 
 datasets = [L1,L2,L4,L5,L7]
 
@@ -69,7 +75,7 @@ sequence = [0]*L1.batched_training_size() + \
            [3]*L5.batched_training_size() + \
            [4]*L7.batched_training_size()
 
-model = GatedGRU(input_size = len(L7.get_vocabulary()),
+model = GatedGRU(input_size = len(vocabulary),
                  embedding_size = args.embedding_size,
                  hidden_size = args.hidden_size,
                  output_size = 1)
@@ -144,3 +150,5 @@ print('Epoch '+str(args.num_epochs)+' - Loss: ',round(epoch_loss,2))
 
 # save model
 torch.save(model.state_dict(), args.model_save)
+
+#14344014

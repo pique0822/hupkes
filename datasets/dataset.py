@@ -8,6 +8,9 @@ class Dataset(object):
         if batch_size is None:
             batch_size = 1
 
+        self.dataset_file = dataset_file
+        self.training_percent = training_percent
+
         self.batch_size = batch_size
 
         # getting the vocabulary
@@ -20,11 +23,13 @@ class Dataset(object):
                 self.vocabulary.update(words)
 
         self.vocabulary = list(sorted(self.vocabulary))
+        self.tokenize()
 
+    def tokenize(self):
         # tokenize the dataset
         self.X = []
         self.y = []
-        with open(dataset_file) as file:
+        with open(self.dataset_file) as file:
             for line in file:
                 tokenized_line = []
 
@@ -46,15 +51,16 @@ class Dataset(object):
         # generate random training set
         self._training_indices = np.random.choice(range(0,self.X.shape[0]),self.X.shape[0],replace=False)
 
-        self._testing_indices = self._training_indices[int(training_percent * self.X.shape[0]):]
+        self._testing_indices = self._training_indices[int(self.training_percent * self.X.shape[0]):]
 
-        self._training_indices = self._training_indices[:int(training_percent * self.X.shape[0])]
+        self._training_indices = self._training_indices[:int(self.training_percent * self.X.shape[0])]
 
     def get_vocabulary(self):
         return list(self.vocabulary)
 
     def set_vocabulary(self, vocabulary):
         self.vocabulary = vocabulary
+        self.tokenize()
 
     def word2token(self, word):
         return self.vocabulary.index(word)
