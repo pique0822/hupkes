@@ -151,4 +151,4 @@ print('Epoch '+str(args.num_epochs)+' - Loss: ',round(epoch_loss,2))
 # save model
 torch.save(model.state_dict(), args.model_save)
 
-#14344014
+#14344192
