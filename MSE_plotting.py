@@ -99,63 +99,50 @@ def recursive_sum(expression):
 
 test_batch_size = 1
 
-# for now we ignore the dataset file
-L1 = Dataset('datasets/L1/data.txt', 0, test_batch_size)
-L2 = Dataset('datasets/L2/data.txt', 0, test_batch_size)
-L3 = Dataset('datasets/L3/data.txt', 0, test_batch_size)
-L4 = Dataset('datasets/L4/data.txt', 0, test_batch_size)
-L5 = Dataset('datasets/L5/data.txt', 0, test_batch_size)
-L6 = Dataset('datasets/L6/data.txt', 0, test_batch_size)
-L7 = Dataset('datasets/L7/data.txt', 0, test_batch_size)
-L8 = Dataset('datasets/L6/data.txt', 0, test_batch_size)
-L9 = Dataset('datasets/L7/data.txt', 0, test_batch_size)
-
+relevant_models = 20
+relevant_datasets = 9
 vocabulary = ['zero', 'one', 'two', 'three', 'four', 'five',
               'six', 'seven', 'eight', 'nine', 'ten',
               '-one',  '-two', '-three', '-four', '-five',
               '-six', '-seven', '-eight', '-nine', '-ten',
               '(', ')', 'plus', 'minus']
 
-L1.set_vocabulary(vocabulary)
-L2.set_vocabulary(vocabulary)
-L3.set_vocabulary(vocabulary)
-L4.set_vocabulary(vocabulary)
-L5.set_vocabulary(vocabulary)
-L6.set_vocabulary(vocabulary)
-L7.set_vocabulary(vocabulary)
-L8.set_vocabulary(vocabulary)
-
 # dataframe
 # |  MODELID  |  DATASET  |  MSE  |
 
+criterion = nn.MSELoss()
 
-datasets = [L1,L2,L3,L4,L5,L6,L7,L8,L9]
-models = []
-for k in range(20):
+# MSE over all datasets models
+MSE_per_model = {'model_id':[],'dataset_id':[],'mse':[]}
+
+# mse over all datasets linear decoders
+all_decoder_MSEs = {'model_id':[], 'dataset_id':[], 'target_type':[], 'mse':[]}
+
+training_percent = 0.9
+
+for k in range(relevant_models):
+    print('Model '+str(k+1))
+
     model = GatedGRU(input_size = len(vocabulary),
                      embedding_size = args.embedding_size,
                      hidden_size = args.hidden_size,
                      output_size = 1)
     model.load_state_dict(torch.load('models/hupkes_model_'+str(k+1)+'.mdl'))
     model.eval()
-    models.append(model)
 
-criterion = nn.MSELoss()
 
-# MSE over all datasets
-MSE_per_model = {'model_id':[],'dataset_id':[],'mse':[]}
-hiddens_per_model = {}
+    for dataset_number in range(relevant_datasets):
+        print('L'+str(dataset_number+1))
 
-cumulative_sum_dataset = {}
-recursive_sum_dataset = {}
-for k, model in enumerate(models):
-    dataset_hiddens = {}
-    print('Model '+str(k+1))
-    for dataset_number, dataset in enumerate(datasets):
-        cumulative_sum_dataset[dataset_number] = []
-        recursive_sum_dataset[dataset_number] = []
-        dataset_hiddens[dataset_number] = []
+        # loading dataset
+        dataset = Dataset('datasets/L'+str(dataset_number+1)+'/data.txt', 0, test_batch_size)
+        dataset.set_vocabulary(vocabulary)
 
+        cumulative_sum_dataset = []
+        recursive_sum_dataset = []
+        dataset_hiddens = []
+
+        # getting data
         dataset_MSE = 0
         for data_idx in range(dataset.batched_testing_size()):
             X,y = dataset.get_datapoint(data_idx, training=False)
@@ -173,8 +160,8 @@ for k, model in enumerate(models):
                     rec_result = recursive_sum(words)
                     recursive_sum_results.append(rec_result)
 
-                cumulative_sum_dataset[dataset_number].extend(cumulative_sum_results)
-                recursive_sum_dataset[dataset_number].extend(recursive_sum_results)
+                cumulative_sum_dataset.extend(cumulative_sum_results)
+                recursive_sum_dataset.extend(recursive_sum_results)
 
             X = torch.Tensor(X).reshape(X.shape[0], -1, 1).long()
             y = torch.Tensor(y).reshape(X.shape[0],-1)
@@ -187,7 +174,7 @@ for k, model in enumerate(models):
 
             for t in range(len(hidden_states)):
                 hidden_t = hidden_states[t].reshape(test_batch_size,-1)
-                dataset_hiddens[dataset_number].append(hidden_t.detach().numpy())
+                dataset_hiddens.append(hidden_t.detach().numpy())
 
 
             dataset_MSE += criterion(output,y).item()*X.shape[0]
@@ -196,8 +183,43 @@ for k, model in enumerate(models):
         MSE_per_model['dataset_id'].append('L'+str(dataset_number + 1))
         MSE_per_model['mse'].append(dataset_MSE/dataset.batched_testing_size())
 
-    hiddens_per_model[k+1] = dataset_hiddens
+        # linear decoders
 
+        cum_sum = np.array(cumulative_sum_dataset)
+        rec_sum = np.array(recursive_sum_dataset)
+
+        hiddens = np.array(dataset_hiddens).reshape(len(cum_sum),-1)
+
+        training_set = np.random.choice(range(len(hiddens)),len(hiddens),replace=True)
+
+        testing_set = training_set[int(len(training_set)*training_percent):]
+        training_set = training_set[:int(len(training_set)*training_percent)]
+
+        # cumulative sum
+        reg = LinearRegression()
+        reg.fit(hiddens[training_set,:], cum_sum[training_set])
+
+        predictions = reg.predict(hiddens[testing_set,:])
+
+        mse = mean_squared_error(predictions, cum_sum[testing_set])
+
+        all_decoder_MSEs['model_id'].append(k+1)
+        all_decoder_MSEs['dataset_id'].append('L'+str(dataset_number+1))
+        all_decoder_MSEs['mse'].append(mse)
+        all_decoder_MSEs['target_type'].append('Cumulative Sum')
+
+        # recursive sum
+        reg = LinearRegression()
+        reg.fit(hiddens[training_set,:], rec_sum[training_set])
+
+        predictions = reg.predict(hiddens[testing_set,:])
+
+        mse = mean_squared_error(predictions, rec_sum[testing_set])
+
+        all_decoder_MSEs['model_id'].append(k+1)
+        all_decoder_MSEs['dataset_id'].append('L'+str(dataset_number+1))
+        all_decoder_MSEs['mse'].append(mse)
+        all_decoder_MSEs['target_type'].append('Recursive Sum')
 
 
 mses_df = pd.DataFrame.from_dict(MSE_per_model)
@@ -218,52 +240,6 @@ plt.ylabel('MSE')
 plt.tight_layout()
 plt.savefig('results/model_perf_by_model.png')
 plt.close()
-
-
-
-# Predicting cummulative sum
-# training percentage for linear decoders
-
-all_decoder_MSEs = {'model_id':[], 'dataset_id':[], 'target_type':[], 'mse':[]}
-for model_id in hiddens_per_model.keys():
-    decoder_mse = []
-    training_percent = 0.9
-    for dataset_number, dataset in enumerate(datasets):
-        cum_sum = np.array(cumulative_sum_dataset[dataset_number])
-        rec_sum = np.array(recursive_sum_dataset[dataset_number])
-
-        hiddens = np.array(hiddens_per_model[model_id][dataset_number]).reshape(len(cum_sum),-1)
-
-        training_set = np.random.choice(range(len(hiddens)),len(hiddens),replace=True)
-
-        testing_set = training_set[int(len(training_set)*training_percent):]
-        training_set = training_set[:int(len(training_set)*training_percent)]
-
-        reg = LinearRegression()
-        reg.fit(hiddens[training_set,:], cum_sum[training_set])
-
-        predictions = reg.predict(hiddens[testing_set,:])
-
-        mse = mean_squared_error(predictions, cum_sum[testing_set])
-
-        all_decoder_MSEs['model_id'].append(model_id+1)
-        all_decoder_MSEs['dataset_id'].append('L'+str(dataset_number+1))
-        all_decoder_MSEs['mse'].append(mse)
-        all_decoder_MSEs['target_type'].append('Cumulative Sum')
-
-
-        reg = LinearRegression()
-        reg.fit(hiddens[training_set,:], rec_sum[training_set])
-
-        predictions = reg.predict(hiddens[testing_set,:])
-
-        mse = mean_squared_error(predictions, rec_sum[testing_set])
-
-        all_decoder_MSEs['model_id'].append(model_id+1)
-        all_decoder_MSEs['dataset_id'].append('L'+str(dataset_number+1))
-        all_decoder_MSEs['mse'].append(mse)
-        all_decoder_MSEs['target_type'].append('Recursive Sum')
-
 
 
 decoder_df = pd.DataFrame.from_dict(all_decoder_MSEs)
