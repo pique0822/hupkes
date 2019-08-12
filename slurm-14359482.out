@@ -1,0 +1,4 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+slurmstepd: error: Job 14359482 exceeded memory limit (4221080 > 4194304), being killed
+slurmstepd: error: Exceeded job memory limit
+slurmstepd: error: *** JOB 14359482 ON node004 CANCELLED AT 2019-08-12T13:04:48 ***
