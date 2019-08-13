@@ -10,4 +10,4 @@ NUM_EPOCHS=$2
 
 singularity exec -B /om/group/cpl -B "$PROJECT_PATH" "$SINGULARITY_IMG" python3 train_GRU.py \
 		--model_save "models/hupkes_model_${MODEL_ID}.mdl" \
-		--num_epochs ${NUM_EPOCHS} >> "models/training_model_${MODEL_ID}.txt"
+		--num_epochs ${NUM_EPOCHS} > "models/training_model_${MODEL_ID}.txt"

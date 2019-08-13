@@ -1,2 +1,0 @@
-[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
-slurmstepd: error: *** JOB 14360038 ON node052 CANCELLED AT 2019-08-12T13:52:47 ***

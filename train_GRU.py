@@ -48,6 +48,9 @@ parser.add_argument('--decay', type=float, default=0.0,
 
 args = parser.parse_args()
 
+if torch.cuda.is_available():
+    print(torch.cuda.get_device_name(0))
+
 # for now we ignore the dataset file
 L1 = Dataset('datasets/L1/data.txt', args.training_percent, args.batch_size)
 L2 = Dataset('datasets/L2/data.txt', args.training_percent, args.batch_size)
@@ -78,7 +81,7 @@ sequence = [0]*L1.batched_training_size() + \
 model = GatedGRU(input_size = len(vocabulary),
                  embedding_size = args.embedding_size,
                  hidden_size = args.hidden_size,
-                 output_size = 1)
+                 output_size = 1).cuda()
 
 criterion = nn.MSELoss()
 
@@ -100,11 +103,11 @@ for epoch in range(args.num_epochs):
         hidden = model.init_hidden()
 
         X,y = datasets[training_sequence_idx].get_datapoint(dataset_index, training=True)
-        X = torch.Tensor(X).reshape(args.batch_size, -1, 1).long()
-        y = torch.Tensor(y).reshape(args.batch_size,-1)
+        X = torch.Tensor(X).reshape(args.batch_size, -1, 1).long().cuda()
+        y = torch.Tensor(y).reshape(args.batch_size,-1).cuda()
 
         output, hidden, _ = model(X,hidden)
-
+        output = output.cpu()
         batch_loss = criterion(output,y)
 
         epoch_loss += batch_loss.item()
@@ -115,8 +118,8 @@ for epoch in range(args.num_epochs):
 
     if epoch%args.print_frequency == 0:
         print('Epoch '+str(epoch)+' - Loss: ',round(epoch_loss,2))
-
-        torch.save(model.state_dict(), args.model_save+'_epoch_'+str(epoch))
+        iterim_model = model.cpu()
+        torch.save(iterim_model.state_dict(), args.model_save+'_epoch_'+str(epoch))
 
 # final test
 epoch_loss = 0
@@ -134,11 +137,11 @@ for training_sequence_idx in training_sequence:
     hidden = model.init_hidden()
 
     X,y = datasets[training_sequence_idx].get_datapoint(dataset_index, training=True)
-    X = torch.Tensor(X).reshape(args.batch_size, -1, 1).long()
-    y = torch.Tensor(y).reshape(args.batch_size,-1)
+    X = torch.Tensor(X).reshape(args.batch_size, -1, 1).long().cuda()
+    y = torch.Tensor(y).reshape(args.batch_size,-1).cuda()
 
     output, hidden, _ = model(X,hidden)
-
+    output = output.cpu()
     batch_loss = criterion(output,y)
 
     epoch_loss += batch_loss.item()
@@ -149,6 +152,7 @@ for training_sequence_idx in training_sequence:
 print('Epoch '+str(args.num_epochs)+' - Loss: ',round(epoch_loss,2))
 
 # save model
+model = model.cpu()
 torch.save(model.state_dict(), args.model_save)
 
 #14344192
