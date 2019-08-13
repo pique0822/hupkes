@@ -107,6 +107,46 @@ def recursive_sum(expression):
 
     return result
 
+def plot_model_MSE(dataset, show=False):
+    mses_df = pd.DataFrame.from_dict(dataset)
+
+    sns.pointplot(x='dataset_id',y='mse',data=mses_df)
+    plt.title('Testing Model Performance')
+    plt.xlabel('Dataset')
+    plt.ylabel('MSE')
+    plt.tight_layout()
+    if show:
+        plt.show()
+    else:
+        plt.savefig('results/model_perf_all.png')
+        plt.close()
+
+
+    sns.factorplot(x='dataset_id',y='mse',hue='model_id',data=mses_df)
+    plt.title('Testing Model Performance by Model')
+    plt.xlabel('Dataset')
+    plt.ylabel('MSE')
+    plt.tight_layout()
+    if show:
+        plt.show()
+    else:
+        plt.savefig('results/model_perf_by_model.png')
+        plt.close()
+
+def plot_decoder_MSE(dataset, show=False):
+    decoder_df = pd.DataFrame.from_dict(dataset)
+
+    sns.pointplot(x='dataset_id',y='mse', hue='target_type',data=decoder_df)
+    plt.title('Testing Linear Decoder Performance')
+    plt.xlabel('Dataset')
+    plt.ylabel('MSE')
+    plt.tight_layout()
+    if show:
+        plt.show()
+    else:
+        plt.savefig('results/linear_decoders.png')
+        plt.close()
+
 test_batch_size = 1
 
 relevant_models = 20
@@ -230,33 +270,5 @@ for k in range(relevant_models):
         all_decoder_MSEs['mse'].append(mse)
         all_decoder_MSEs['target_type'].append('Recursive Sum')
 
-
-mses_df = pd.DataFrame.from_dict(MSE_per_model)
-
-sns.pointplot(x='dataset_id',y='mse',data=mses_df)
-plt.title('Testing Model Performance')
-plt.xlabel('Dataset')
-plt.ylabel('MSE')
-plt.tight_layout()
-plt.savefig('results/model_perf_all.png')
-plt.close()
-
-
-sns.factorplot(x='dataset_id',y='mse',hue='model_id',data=mses_df)
-plt.title('Testing Model Performance by Model')
-plt.xlabel('Dataset')
-plt.ylabel('MSE')
-plt.tight_layout()
-plt.savefig('results/model_perf_by_model.png')
-plt.close()
-
-
-decoder_df = pd.DataFrame.from_dict(all_decoder_MSEs)
-
-sns.pointplot(x='dataset_id',y='mse', hue='target_type',data=decoder_df)
-plt.title('Testing Linear Decoder Performance')
-plt.xlabel('Dataset')
-plt.ylabel('MSE')
-plt.tight_layout()
-plt.savefig('results/linear_decoders.png')
-plt.close()
+plot_model_MSE(MSE_per_model, show=False)
+plot_decoder_MSE(all_decoder_MSEs, show=False)
