@@ -28,6 +28,16 @@ parser.add_argument('--embedding_size',type=int, default=2,
                     help='The dimension of the model embedding')
 parser.add_argument('--hidden_size',type=int, default=15,
                     help='The dimension of the model hidden state')
+
+# dataset_information
+parser.add_argument('--vocabulary_file',type=str,
+                    default='datasets/hupkes_vocabulary.txt',
+                    help='File containing each possible word in the training set.')
+parser.add_argument('--dataset_file',type=str, default='hupkes.txt',
+                    help='File that contains the full dataset from which we will take the training and test data.')
+parser.add_argument('--test_percent',type=float,
+                    default=0.2,
+                    help='Percent of data that is to be used as testing.')
 # parser.add_argument('--model_save',type=str, default=None,
 #                     help='File name to which we will save the model.')
 args = parser.parse_args()
@@ -101,11 +111,10 @@ test_batch_size = 1
 
 relevant_models = 20
 relevant_datasets = 9
-vocabulary = ['zero', 'one', 'two', 'three', 'four', 'five',
-              'six', 'seven', 'eight', 'nine', 'ten',
-              '-one',  '-two', '-three', '-four', '-five',
-              '-six', '-seven', '-eight', '-nine', '-ten',
-              '(', ')', 'plus', 'minus']
+vocabulary = []
+with open(args.vocabulary_file, 'r') as vocab_file:
+    for line in vocab_file:
+        vocabulary.append(line.strip())
 
 # dataframe
 # |  MODELID  |  DATASET  |  MSE  |
@@ -135,7 +144,7 @@ for k in range(relevant_models):
         print('L'+str(dataset_number+1))
 
         # loading dataset
-        dataset = Dataset('datasets/L'+str(dataset_number+1)+'/data.txt', 0, test_batch_size)
+        dataset = Dataset('datasets/L'+str(dataset_number+1)+'/'+args.dataset_file, 1 - args.test_percent, test_batch_size)
         dataset.set_vocabulary(vocabulary)
 
         cumulative_sum_dataset = []

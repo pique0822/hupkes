@@ -3,7 +3,7 @@ import numpy as np
 class Dataset(object):
     """Dataset for the arithmetic language"""
 
-    def __init__(self, dataset_file, training_percent=0.3, batch_size=None):
+    def __init__(self, dataset_file, training_percent=0.6, batch_size=None):
         super(Dataset, self).__init__()
         if batch_size is None:
             batch_size = 1

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+> training_ids.txt
+
 NUM_EPOCHS=1000
 for MODEL_ID in $(seq 1 20)
 do
