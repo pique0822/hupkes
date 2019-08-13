@@ -14,11 +14,14 @@ parser = argparse.ArgumentParser(description='Trains a GRU model on the arithmet
 parser.add_argument('--dataset_file',type=str, default=None,
                     help='File that contains the full dataset from which we will take the training and test data.')
 parser.add_argument('--training_percent',type=float,
-                    default=0.3,
+                    default=0.6,
                     help='Percent of data that is to be used as training.')
 parser.add_argument('--batch_size',type=int,
                     default=24,
                     help='Batch size for the dataset')
+parser.add_argument('--vocabulary_file',type=str,
+                    default='datasets/hupkes_vocabulary.txt',
+                    help='File containing each possible word in the training set.')
 
 # model information
 parser.add_argument('--embedding_size',type=int, default=2,
@@ -49,17 +52,16 @@ parser.add_argument('--decay', type=float, default=0.0,
 args = parser.parse_args()
 
 # for now we ignore the dataset file
-L1 = Dataset('datasets/L1/data.txt', args.training_percent, args.batch_size)
-L2 = Dataset('datasets/L2/data.txt', args.training_percent, args.batch_size)
-L4 = Dataset('datasets/L4/data.txt', args.training_percent, args.batch_size)
-L5 = Dataset('datasets/L5/data.txt', args.training_percent, args.batch_size)
-L7 = Dataset('datasets/L7/data.txt', args.training_percent, args.batch_size)
+L1 = Dataset('datasets/L1/'+args.dataset_file, args.training_percent, args.batch_size)
+L2 = Dataset('datasets/L2/'+args.dataset_file, args.training_percent, args.batch_size)
+L4 = Dataset('datasets/L4/'+args.dataset_file, args.training_percent, args.batch_size)
+L5 = Dataset('datasets/L5/'+args.dataset_file, args.training_percent, args.batch_size)
+L7 = Dataset('datasets/L7/'+args.dataset_file, args.training_percent, args.batch_size)
 
-vocabulary = ['zero', 'one', 'two', 'three', 'four', 'five',
-              'six', 'seven', 'eight', 'nine', 'ten',
-              '-one',  '-two', '-three', '-four', '-five',
-              '-six', '-seven', '-eight', '-nine', '-ten',
-              '(', ')', 'plus', 'minus']
+vocabulary = []
+with open(args.vocabulary_file, 'r') as vocab_file:
+    for line in vocab_file:
+        vocabulary.append(line.strip())
 
 L1.set_vocabulary(vocabulary)
 L2.set_vocabulary(vocabulary)

@@ -28,6 +28,16 @@ parser.add_argument('--embedding_size',type=int, default=2,
                     help='The dimension of the model embedding')
 parser.add_argument('--hidden_size',type=int, default=15,
                     help='The dimension of the model hidden state')
+
+# dataset_information
+parser.add_argument('--vocabulary_file',type=str,
+                    default='datasets/hupkes_vocabulary.txt',
+                    help='File containing each possible word in the training set.')
+parser.add_argument('--dataset_file',type=str, default='hupkes.txt',
+                    help='File that contains the full dataset from which we will take the training and test data.')
+parser.add_argument('--test_percent',type=float,
+                    default=0.2,
+                    help='Percent of data that is to be used as testing.')
 # parser.add_argument('--model_save',type=str, default=None,
 #                     help='File name to which we will save the model.')
 args = parser.parse_args()
@@ -97,15 +107,54 @@ def recursive_sum(expression):
 
     return result
 
+def plot_model_MSE(dataset, show=False):
+    mses_df = pd.DataFrame.from_dict(dataset)
+
+    sns.pointplot(x='dataset_id',y='mse',data=mses_df)
+    plt.title('Testing Model Performance')
+    plt.xlabel('Dataset')
+    plt.ylabel('MSE')
+    plt.tight_layout()
+    if show:
+        plt.show()
+    else:
+        plt.savefig('results/model_perf_all.png')
+        plt.close()
+
+
+    sns.factorplot(x='dataset_id',y='mse',hue='model_id',data=mses_df)
+    plt.title('Testing Model Performance by Model')
+    plt.xlabel('Dataset')
+    plt.ylabel('MSE')
+    plt.tight_layout()
+    if show:
+        plt.show()
+    else:
+        plt.savefig('results/model_perf_by_model.png')
+        plt.close()
+
+def plot_decoder_MSE(dataset, show=False):
+    decoder_df = pd.DataFrame.from_dict(dataset)
+
+    sns.pointplot(x='dataset_id',y='mse', hue='target_type',data=decoder_df)
+    plt.title('Testing Linear Decoder Performance')
+    plt.xlabel('Dataset')
+    plt.ylabel('MSE')
+    plt.tight_layout()
+    if show:
+        plt.show()
+    else:
+        plt.savefig('results/linear_decoders.png')
+        plt.close()
+
 test_batch_size = 1
 
 relevant_models = 20
 relevant_datasets = 9
-vocabulary = ['zero', 'one', 'two', 'three', 'four', 'five',
-              'six', 'seven', 'eight', 'nine', 'ten',
-              '-one',  '-two', '-three', '-four', '-five',
-              '-six', '-seven', '-eight', '-nine', '-ten',
-              '(', ')', 'plus', 'minus']
+vocabulary = []
+with open(args.vocabulary_file, 'r') as vocab_file:
+    for line in vocab_file:
+        vocabulary.append(line.strip())
 
 # dataframe
 # |  MODELID  |  DATASET  |  MSE  |
@@ -135,7 +184,7 @@ for k in range(relevant_models):
         print('L'+str(dataset_number+1))
 
         # loading dataset
-        dataset = Dataset('datasets/L'+str(dataset_number+1)+'/data.txt', 0, test_batch_size)
+        dataset = Dataset('datasets/L'+str(dataset_number+1)+'/'+args.dataset_file, 1 - args.test_percent, test_batch_size)
         dataset.set_vocabulary(vocabulary)
 
         cumulative_sum_dataset = []
@@ -221,33 +270,5 @@ for k in range(relevant_models):
         all_decoder_MSEs['mse'].append(mse)
         all_decoder_MSEs['target_type'].append('Recursive Sum')
 
-
-mses_df = pd.DataFrame.from_dict(MSE_per_model)
-
-sns.pointplot(x='dataset_id',y='mse',data=mses_df)
-plt.title('Testing Model Performance')
-plt.xlabel('Dataset')
-plt.ylabel('MSE')
-plt.tight_layout()
-plt.savefig('results/model_perf_all.png')
-plt.close()
-
-
-sns.factorplot(x='dataset_id',y='mse',hue='model_id',data=mses_df)
-plt.title('Testing Model Performance by Model')
-plt.xlabel('Dataset')
-plt.ylabel('MSE')
-plt.tight_layout()
-plt.savefig('results/model_perf_by_model.png')
-plt.close()
-
-
-decoder_df = pd.DataFrame.from_dict(all_decoder_MSEs)
-
-sns.pointplot(x='dataset_id',y='mse', hue='target_type',data=decoder_df)
-plt.title('Testing Linear Decoder Performance')
-plt.xlabel('Dataset')
-plt.ylabel('MSE')
-plt.tight_layout()
-plt.savefig('results/linear_decoders.png')
-plt.close()
+plot_model_MSE(MSE_per_model, show=False)
+plot_decoder_MSE(all_decoder_MSEs, show=False)
