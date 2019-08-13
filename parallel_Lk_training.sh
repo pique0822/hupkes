@@ -1,11 +1,15 @@
 #!/bin/bash
 
-> training_ids.txt
-
 NUM_EPOCHS=1000
+DATASET=all_operations.txt
+BASE_NAME=all_operations
+
+> ${BASE_NAME}_training_ids.txt
+
+
 for MODEL_ID in $(seq 1 20)
 do
-	echo Training Model ${MODEL_ID} for ${NUM_EPOCHS} epochs
+	echo Training Model ${BASE_NAME}_${MODEL_ID} for ${NUM_EPOCHS} epochs
 
-	sbatch --time 1000 --job-name hupkes_${MODEL_ID} Lk_training.sh ${MODEL_ID} ${NUM_EPOCHS} >> training_ids.txt
+	sbatch --time 3000 --job-name ${BASE_NAME}_${MODEL_ID} Lk_training.sh ${BASE_NAME} ${MODEL_ID} ${NUM_EPOCHS} ${DATASET} >> ${BASE_NAME}_training_ids.txt
 done
