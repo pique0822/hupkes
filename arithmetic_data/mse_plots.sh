@@ -7,4 +7,4 @@ PROJECT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" >/dev/null 2>&1 && pwd -
 
 singularity exec -B /om/group/cpl -B "$PROJECT_PATH" "$SINGULARITY_IMG" python3 MSE_plotting.py
 
-# 14370449
+# 14372515
