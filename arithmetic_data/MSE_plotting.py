@@ -176,7 +176,7 @@ for k in range(relevant_models):
                      embedding_size = args.embedding_size,
                      hidden_size = args.hidden_size,
                      output_size = 1)
-    model.load_state_dict(torch.load('models/hupkes_model_'+str(k+1)+'.mdl'))
+    model.load_state_dict(torch.load('models/hupkes_model_'+str(k+1)+'.mdl_epoch_990'))
     model.eval()
 
 
