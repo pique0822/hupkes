@@ -7,7 +7,7 @@ import numpy as np
 parser = argparse.ArgumentParser(description='Generates a set of sequences generated to retain information.')
 parser.add_argument('--num_examples',type=int, default=100,
                     help='Integer that defines the number of examples sentences that should be generated.')
-parser.add_argument('--k',type=int, default=1,
+parser.add_argument('--k',type=int, default=2,
                     help='Quantity of tokens that are to be used as possible memories.')
 parser.add_argument('--output_file',type=str, default='data.txt',
                     help='File that contains the generated lines from this program.')
@@ -31,13 +31,24 @@ with open(args.output_file,'w+') as out:
     while line < args.num_examples:
 
         # 1. Pick 'k' items from the vocabulary, call them 'unique'
-        unique = np.random.choice(vocabulary,k,replace=False)
-        import pdb; pdb.set_trace()
+        unique = np.random.choice(vocabulary,args.k,replace=False)
+
         # 2. Pick 'k-1' items from the chosen 'unique' set, call them 'repeated'
+        repeated = np.random.choice(unique,args.k,replace=False)
+
+        if args.operation_type == 'singular':
+            num_outputs = 1
+        elif args.operation_type == 'combined':
+            num_outputs = np.random.randint(1,args.k)
+        else:
+            num_outputs = 1
+
+        single = repeated[args.k-num_outputs:]
+        repeated = repeated[:args.k-num_outputs]
 
         # 3. Write the 'unique' set followed by the 'repeated' set. Finally write the item that is not repeated.
 
+        example = ' '.join(unique) + ' '+' '.join(repeated) + ';'+' '.join(single)
 
+        out.write(example+'\n')
         line += 1
-
-        out.write(str(full_op)+';'+str(full_op.get_value())+'\n')
