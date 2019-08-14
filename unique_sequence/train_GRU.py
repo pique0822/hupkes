@@ -140,10 +140,11 @@ for training_sequence_idx in training_sequence:
 
     X,y = datasets[training_sequence_idx].get_datapoint(dataset_index, training=True)
     X = torch.Tensor(X).reshape(args.batch_size, -1, 1).long()
-    y = torch.Tensor(y).reshape(args.batch_size,-1)
+    y = torch.Tensor(y).reshape(-1).long()
 
     output, hidden, _ = model(X,hidden)
     output = output
+
     batch_loss = criterion(output,y)
 
     epoch_loss += batch_loss.item()
