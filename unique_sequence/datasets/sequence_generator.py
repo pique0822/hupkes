@@ -14,7 +14,7 @@ parser.add_argument('--output_file',type=str, default='data.txt',
 parser.add_argument('--operation_type',type=str, default='singular',
                     help='{singular | combined} This will determine if one or multiple tokens are expected as output')
 parser.add_argument('--transition_type',type=str, default='implicit',
-                    help='{implicit | explicit} This will determine if there is an explicit token encoding the beginning of the forgetting stage.')
+                    help='{implicit | explicit | repeated} This will determine if there is an explicit token encoding the beginning of the forgetting stage.')
 
 # dataset information
 parser.add_argument('--vocabulary_file',type=str, default='ten_tokens.txt',
@@ -54,6 +54,9 @@ with open(args.output_file,'w+') as out:
 
         single = repeated[args.k-num_outputs:]
         repeated = repeated[:args.k-num_outputs]
+
+        if args.transition_type == 'repeated':
+            transition_token = ' '+repeated[0]+' '
 
         # import pdb; pdb.set_trace()
         # 3. Write the 'unique' set followed by the 'repeated' set. Finally write the item that is not repeated.

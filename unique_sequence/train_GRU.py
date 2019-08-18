@@ -7,6 +7,9 @@ import torch.nn as nn
 import torch
 
 import numpy as np
+import os
+if not os.path.exists('models'):
+    os.makedirs('models')
 # python3 train_GRU.py --dataset_file ten_tokens_singular_data.txt --vocabulary_file datasets/ten_tokens.txt --model_save test.mdl
 parser = argparse.ArgumentParser(description='Trains a GRU model on the arithmetic language dataset')
 

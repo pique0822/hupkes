@@ -3,10 +3,13 @@ import numpy as np
 class Dataset(object):
     """Dataset for the arithmetic language"""
 
-    def __init__(self, dataset_file, vocabulary_file, training_percent=0.6, batch_size=None):
+    def __init__(self, dataset_file, vocabulary_file, training_percent=0.6, batch_size=None, seed=None):
         super(Dataset, self).__init__()
         if batch_size is None:
             batch_size = 1
+
+        
+        np.random.seed(seed)
 
         self.dataset_file = dataset_file
         self.training_percent = training_percent

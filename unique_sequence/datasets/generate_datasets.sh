@@ -1,9 +1,9 @@
 #!/bin/bash
 
-DATASET_NAME=ten_tokens_explicit
-VOCAB_FILE=${DATASET_NAME}.txt
+DATASET_NAME=ten_tokens_repeated
+VOCAB_FILE=ten_tokens.txt
 OPERATION=singular
-TRANSITION=explicit
+TRANSITION=repeated
 
 
 for k in $(seq 2 10)
