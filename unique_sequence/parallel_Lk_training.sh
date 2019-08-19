@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TIME=3000
-NUM_EPOCHS=3000
+TIME=700
+NUM_EPOCHS=2000
 DATASET=ten_tokens_repeated_singular_data.txt
 BASE_NAME=ten_tokens_repeated
 VOCAB_FILE=datasets/ten_tokens.txt
