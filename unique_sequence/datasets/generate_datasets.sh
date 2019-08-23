@@ -20,5 +20,5 @@ do
 	--operation_type ${OPERATION} \
 	--transition_type ${TRANSITION} \
 	--vocabulary_file ${VOCAB_FILE} \
-	--output_file L${k}/${DATASET_NAME}_${OPERATION}_data.txt
+	--output_file L${k}/${DATASET_NAME}_${OPERATION}notriples_data.txt
 done

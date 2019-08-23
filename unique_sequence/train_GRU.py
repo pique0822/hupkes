@@ -25,6 +25,9 @@ parser.add_argument('--batch_size',type=int,
 parser.add_argument('--vocabulary_file',type=str,
                     default='datasets/ten_tokens.txt',
                     help='File containing each possible word in the training set.')
+parser.add_argument('--dataset_seed',type=int,
+                    default=None,
+                    help='Randomization seed for dataset.')
 
 # model information
 parser.add_argument('--embedding_size',type=int, default=2,
@@ -58,19 +61,23 @@ args = parser.parse_args()
 L2 = Dataset(dataset_file='datasets/L2/'+args.dataset_file, \
              vocabulary_file=args.vocabulary_file, \
              training_percent=args.training_percent,\
-             batch_size=args.batch_size)
+             batch_size=args.batch_size,\
+             seed=args.seed)
 L4 = Dataset(dataset_file='datasets/L4/'+args.dataset_file, \
              vocabulary_file=args.vocabulary_file, \
              training_percent=args.training_percent,\
-             batch_size=args.batch_size)
+             batch_size=args.batch_size,\
+             seed=args.seed)
 L5 = Dataset(dataset_file='datasets/L5/'+args.dataset_file, \
              vocabulary_file=args.vocabulary_file, \
              training_percent=args.training_percent,\
-             batch_size=args.batch_size)
+             batch_size=args.batch_size,\
+             seed=args.seed)
 L7 = Dataset(dataset_file='datasets/L7/'+args.dataset_file, \
              vocabulary_file=args.vocabulary_file, \
              training_percent=args.training_percent,\
-             batch_size=args.batch_size)
+             batch_size=args.batch_size,\
+             seed=args.seed)
 
 vocabulary = L7.get_vocabulary()
 

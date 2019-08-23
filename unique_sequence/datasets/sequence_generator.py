@@ -56,6 +56,14 @@ with open(args.output_file,'w+') as out:
         repeated = repeated[:args.k-num_outputs]
 
         if args.transition_type == 'repeated':
+            if unique[len(unique)-1] == repeated[0]:
+                if args.k == 2:
+                    continue
+                else:
+                    temp = repeated[1]
+                    repeated[1] = repeated[0]
+                    repeated[0] = temp
+
             transition_token = ' '+repeated[0]+' '
 
         # import pdb; pdb.set_trace()

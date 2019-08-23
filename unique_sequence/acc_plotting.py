@@ -30,6 +30,7 @@ if not os.path.exists('results'):
 #  python3 acc_plotting.py --vocabulary_file datasets/ten_tokens.txt --base_name ten_tokens --model_directory models_implicit_forget --dataset_file ten_tokens_singular_data.txt
 
 #  python3 acc_plotting.py --vocabulary_file datasets/ten_tokens_explicit.txt --base_name ten_tokens_explicit --model_directory models --dataset_file ten_tokens_explicit_singular_data.txt
+#  python3 acc_plotting.py --vocabulary_file datasets/ten_tokens.txt --base_name ten_tokens_repeated --model_directory models --dataset_file ten_tokens_repeated_singular_data.txt
 
 parser = argparse.ArgumentParser(description='Trains a GRU model on the arithmetic language dataset')
 # model information
@@ -104,7 +105,7 @@ def plot_decoder_MSE(dataset, show=False):
 
 test_batch_size = 1
 
-relevant_models = 1
+relevant_models = 10
 relevant_datasets = 10
 
 forget_delta = 0
@@ -132,10 +133,10 @@ for k in range(0,relevant_models):
                      embedding_size = args.embedding_size,
                      hidden_size = args.hidden_size,
                      output_size = len(vocabulary))
-    model.load_state_dict(torch.load(args.model_directory+'/'+args.base_name+'_'+str(k+1)+'.mdl_epoch_2990'))
+    model.load_state_dict(torch.load(args.model_directory+'/'+args.base_name+'_'+str(k+1)+'.mdl_epoch_1990'))
     model.eval()
 
-    for dataset_number in range(5,relevant_datasets+1):
+    for dataset_number in range(2,relevant_datasets+1):
         print('L'+str(dataset_number))
 
         ingestion_numbers = []
@@ -257,7 +258,8 @@ for k in range(0,relevant_models):
 
 
         plt.axvline(x=dataset_number + forget_delta -1, color='r',linestyle='--')
-        plt.show()
+        # plt.show()
+        plt.close()
 
 
 
@@ -284,7 +286,8 @@ for k in range(0,relevant_models):
         plt.xticks(range(hiddens.shape[1]),range(hiddens.shape[1]))
         plt.ylim(0,1)
         plt.axvline(x=dataset_number-1, color='r',linestyle='--')
-        plt.show()
+        # plt.show()
+        plt.close()
 
 
         # transition probabilities in Updates
@@ -309,7 +312,8 @@ for k in range(0,relevant_models):
         plt.xticks(range(hiddens.shape[1]),range(hiddens.shape[1]))
         plt.ylim(0,1)
         plt.axvline(x=dataset_number-1, color='r',linestyle='--')
-        plt.show()
+        # plt.show()
+        plt.close()
 
         continue
         # # sequence_nums
@@ -383,6 +387,5 @@ for k in range(0,relevant_models):
         # all_decoder_MSEs['dataset_id'].append('L'+str(dataset_number+1))
         # all_decoder_MSEs['mse'].append(mse)
         # all_decoder_MSEs['target_type'].append('Recursive Sum')
-        import pdb; pdb.set_trace()
 plot_model_MSE(MSE_per_model, show=True)
 # plot_decoder_MSE(all_decoder_MSEs, show=True)
