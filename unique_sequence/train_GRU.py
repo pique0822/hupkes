@@ -62,22 +62,22 @@ L2 = Dataset(dataset_file='datasets/L2/'+args.dataset_file, \
              vocabulary_file=args.vocabulary_file, \
              training_percent=args.training_percent,\
              batch_size=args.batch_size,\
-             seed=args.seed)
+             seed=args.dataset_seed)
 L4 = Dataset(dataset_file='datasets/L4/'+args.dataset_file, \
              vocabulary_file=args.vocabulary_file, \
              training_percent=args.training_percent,\
              batch_size=args.batch_size,\
-             seed=args.seed)
+             seed=args.dataset_seed)
 L5 = Dataset(dataset_file='datasets/L5/'+args.dataset_file, \
              vocabulary_file=args.vocabulary_file, \
              training_percent=args.training_percent,\
              batch_size=args.batch_size,\
-             seed=args.seed)
+             seed=args.dataset_seed)
 L7 = Dataset(dataset_file='datasets/L7/'+args.dataset_file, \
              vocabulary_file=args.vocabulary_file, \
              training_percent=args.training_percent,\
              batch_size=args.batch_size,\
-             seed=args.seed)
+             seed=args.dataset_seed)
 
 vocabulary = L7.get_vocabulary()
 
