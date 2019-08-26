@@ -29,7 +29,7 @@ warnings.warn = warn
 
 # python3 per_character_classification.py --vocabulary_file datasets/ten_tokens_explicit.txt --base_name ten_tokens_explicit --model_directory models --dataset_file ten_tokens_explicit_singular_data.txt --model_type explicit --data_location hiddens --graphs temporal --classifier_type decisiontree
 
-# python3 per_character_classification.py --vocabulary_file datasets/ten_tokens_explicit.txt --base_name ten_tokens_explicit --model_directory models --dataset_file ten_tokens_explicit_singular_data.txt --model_type explicit --graph_idx 1024 --data_location hiddens --graphs character
+# python3 per_character_classification.py --vocabulary_file datasets/ten_tokens_explicit.txt --base_name ten_tokens_explicit --model_directory models --dataset_file ten_tokens_explicit_singular_data.txt --model_type explicit --graph_idx 1024 --data_location hiddens --graphs temporal
 
 parser = argparse.ArgumentParser(description='Trains a GRU model on the arithmetic language dataset')
 # model information
@@ -174,7 +174,7 @@ def generate_temp_probability_graph(elements, temp_classifiers):
     plt.legend()
     plt.show()
 
-def generate_observation_probability_graph(elements, temp_classifiers):
+def generate_observation_probability_graph(elements, temp_classifiers, K):
     if args.data_location == 'hiddens':
         title_type = 'Hiddens'
     elif args.data_location == 'resets':
@@ -199,9 +199,12 @@ def generate_observation_probability_graph(elements, temp_classifiers):
             this_text = random_text[training_time_step-1]
             this_idx = vocabulary.index(this_text)
 
-            if this_text == '|':
+            if this_text == '|' and args.model_type == 'explicit':
                 rise_section = False
                 continue
+            elif training_time_step == K and args.model_type == 'implicit':
+                rise_section = False
+
 
             if rise_section:
                 cls_prev = temp_classifiers[training_time_step-2]
@@ -244,8 +247,9 @@ def generate_observation_probability_graph(elements, temp_classifiers):
     plt.xlabel('Timestep')
     plt.ylabel('Probability')
     # plt.xticks(range(len(probabilities)), random_text)
-    plt.legend()
-    plt.show()
+    # plt.legend()
+    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_rise_all.png')
+    plt.close()
 
     sns.pointplot(x='Timestep',y='Probability', hue='Character', data=rise_df)
     plt.title(title_type+' Rise Probability Averaged Over Each Character')
@@ -253,16 +257,17 @@ def generate_observation_probability_graph(elements, temp_classifiers):
     plt.ylabel('Probability')
     # plt.xticks(range(len(probabilities)), random_text)
     plt.legend()
-    plt.show()
-
+    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_rise_char.png')
+    plt.close()
 
     sns.pointplot(x='Timestep',y='Probability',data=fall_df)
     plt.title(title_type+' Fall Probability Averaged Over All Characters')
     plt.xlabel('Timestep')
     plt.ylabel('Probability')
     # plt.xticks(range(len(probabilities)), random_text)
-    plt.legend()
-    plt.show()
+    # plt.legend()
+    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_fall_all.png')
+    plt.close()
 
     sns.pointplot(x='Timestep',y='Probability', hue='Character', data=fall_df)
     plt.title(title_type+' Fall Probability Averaged Over Each Character')
@@ -270,7 +275,8 @@ def generate_observation_probability_graph(elements, temp_classifiers):
     plt.ylabel('Probability')
     # plt.xticks(range(len(probabilities)), random_text)
     plt.legend()
-    plt.show()
+    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_fall_char.png')
+    plt.close()
 
 
 def generate_pos_probability_graph(elements, classifiers):
@@ -324,7 +330,7 @@ model = GatedGRU(input_size = len(vocabulary),
                  embedding_size = args.embedding_size,
                  hidden_size = args.hidden_size,
                  output_size = len(vocabulary))
-model.load_state_dict(torch.load(args.model_directory+'/'+args.base_name+'_3.mdl_epoch_2990'))
+model.load_state_dict(torch.load(args.model_directory+'/'+args.base_name+'_4.mdl_epoch_2990'))
 model.eval()
 
 test_batch_size = 1
@@ -514,7 +520,7 @@ for dataset_number in range(5,6):
 
             # training_y = np.array(dataset_temporal_classification[timestep])
 
-        generate_observation_probability_graph(relevant_data, temporal_classifiers)
+        generate_observation_probability_graph(relevant_data, temporal_classifiers, K = dataset_number)
         # generate_temp_probability_graph(relevant_data, temporal_classifiers)
 
     if args.graphs == 'character':

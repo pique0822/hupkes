@@ -1,10 +1,10 @@
 #!/bin/bash
 
 TIME=3000
-NUM_EPOCHS=3000
-DATASET=ten_tokens_explicit_singular_data.txt
-BASE_NAME=ten_tokens_seeded_explicit
-VOCAB_FILE=datasets/ten_tokens_explicit.txt
+NUM_EPOCHS=5000
+DATASET=alphabet_explicit_singular_data.txt
+BASE_NAME=alphabet_explicit
+VOCAB_FILE=datasets/alphabet_explicit.txt
 
 > ${BASE_NAME}_training_ids.txt
 
