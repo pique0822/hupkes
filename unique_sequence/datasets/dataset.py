@@ -27,24 +27,29 @@ class Dataset(object):
         # tokenize the dataset
         self.X = []
         self.y = []
+        self.pos = []
         with open(self.dataset_file) as file:
             for line in file:
                 tokenized_line = []
+                positions_in_line = []
 
                 input,solution = line.split(';')
                 words = input.split(' ')
 
-                for word in words:
+                for widx, word in enumerate(words):
                     token = self.word2token(word)
                     tokenized_line.append(token)
+                    positions_in_line.append(widx)
 
                 unique_value = self.word2token(solution.strip())
 
                 self.X.append(tokenized_line)
                 self.y.append(unique_value)
+                self.pos.append(positions_in_line)
 
         self.X = np.array(self.X)
         self.y = np.array(self.y)
+        self.pos = np.array(self.pos)
 
         # generate random training set
         self._training_indices = np.random.choice(range(0,self.X.shape[0]),self.X.shape[0],replace=False)
@@ -73,7 +78,7 @@ class Dataset(object):
     def token2word(self, token):
         return self.vocabulary[token]
 
-    def get_datapoint(self, index, training=True):
+    def get_datapoint(self, index, training=True, positions=False):
 
         if training:
             lower_bound_index = max(0,index*self.batch_size)
@@ -88,7 +93,9 @@ class Dataset(object):
 
         X = self.X[relevant_indices,:]
         y = self.y[relevant_indices]
-
+        if positions:
+            pos = self.pos[relevant_indices,:]
+            return X,y,pos
         return X,y
 
     def batched_training_size(self):
