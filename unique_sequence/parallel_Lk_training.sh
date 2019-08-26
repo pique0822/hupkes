@@ -2,9 +2,9 @@
 
 TIME=3000
 NUM_EPOCHS=3000
-DATASET=ten_tokens_repeated_singularnotriples_data.txt
-BASE_NAME=ten_tokens_repeated_notriples
-VOCAB_FILE=datasets/ten_tokens.txt
+DATASET=ten_tokens_explicit_singular_data.txt
+BASE_NAME=ten_tokens_seeded_explicit
+VOCAB_FILE=datasets/ten_tokens_explicit.txt
 
 > ${BASE_NAME}_training_ids.txt
 
