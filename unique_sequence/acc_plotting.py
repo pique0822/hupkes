@@ -105,7 +105,7 @@ def plot_decoder_MSE(dataset, show=False):
 
 test_batch_size = 1
 
-relevant_models = 10
+relevant_models = 5
 relevant_datasets = 10
 
 forget_delta = 0
@@ -133,7 +133,7 @@ for k in range(0,relevant_models):
                      embedding_size = args.embedding_size,
                      hidden_size = args.hidden_size,
                      output_size = len(vocabulary))
-    model.load_state_dict(torch.load(args.model_directory+'/'+args.base_name+'_'+str(k+1)+'.mdl_epoch_1990'))
+    model.load_state_dict(torch.load(args.model_directory+'/'+args.base_name+'_'+str(k+1)+'.mdl'))
     model.eval()
 
     for dataset_number in range(2,relevant_datasets+1):
@@ -142,7 +142,7 @@ for k in range(0,relevant_models):
         ingestion_numbers = []
 
         # loading dataset
-        dataset = Dataset('datasets/L'+str(dataset_number)+'/'+args.dataset_file, args.vocabulary_file, 1 - args.test_percent, test_batch_size)
+        dataset = Dataset('datasets/L'+str(dataset_number)+'/'+args.dataset_file, args.vocabulary_file, 1 - args.test_percent, test_batch_size, seed=k+1)
 
         # getting data
         dataset_hiddens = []

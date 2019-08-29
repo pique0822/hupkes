@@ -27,6 +27,8 @@ def warn(*args, **kwargs):
 import warnings
 warnings.warn = warn
 
+# python3 per_character_classification.py --vocabulary_file datasets/ten_tokens_explicit.txt --base_name ten_tokens_seeded_explicit --model_directory seeded_models --dataset_file ten_tokens_explicit_singular_data.txt --model_type explicit --graph_idx 1024 --data_location resets --graphs temporal --time_delta 2 --model_id 5
+
 # python3 per_character_classification.py --vocabulary_file datasets/ten_tokens_explicit.txt --base_name ten_tokens_explicit --model_directory models --dataset_file ten_tokens_explicit_singular_data.txt --model_type explicit --data_location hiddens --graphs temporal --classifier_type decisiontree
 
 # python3 per_character_classification.py --vocabulary_file datasets/ten_tokens_explicit.txt --base_name ten_tokens_explicit --model_directory models --dataset_file ten_tokens_explicit_singular_data.txt --model_type explicit --graph_idx 1024 --data_location hiddens --graphs temporal
@@ -60,6 +62,10 @@ parser.add_argument('--classifier_type',type=str, default='linear',
 help='{linear | decisiontree}')
 parser.add_argument('--graph_idx',type=int, default=-1,
 help='If left as -1, the index will be random otherwise specify an index in particular')
+parser.add_argument('--time_delta',type=int, default=1,
+help='How many time steps forward to observe')
+parser.add_argument('--model_id',type=int, default=1,
+help='Identifying number for the model')
 args = parser.parse_args()
 
 vocabulary = []
@@ -174,7 +180,7 @@ def generate_temp_probability_graph(elements, temp_classifiers):
     plt.legend()
     plt.show()
 
-def generate_observation_probability_graph(elements, temp_classifiers, K):
+def generate_observation_probability_graph(elements, temp_classifiers, K, time_delta=1 , name_modifier = ""):
     if args.data_location == 'hiddens':
         title_type = 'Hiddens'
     elif args.data_location == 'resets':
@@ -194,12 +200,10 @@ def generate_observation_probability_graph(elements, temp_classifiers, K):
         random_output = outputs[random_index]
         
         rise_section = True
-        for training_time_step in range(2,len(random_example)):
-
-            this_text = random_text[training_time_step-1]
-            this_idx = vocabulary.index(this_text)
-
-            if this_text == '|' and args.model_type == 'explicit':
+        for training_time_step in range(time_delta+1, len(random_example)):
+            # print('RISE',rise_section)
+            # print('Time',training_time_step)
+            if training_time_step == K-1 or training_time_step == K and args.model_type == 'explicit':
                 rise_section = False
                 continue
             elif training_time_step == K and args.model_type == 'implicit':
@@ -207,38 +211,73 @@ def generate_observation_probability_graph(elements, temp_classifiers, K):
 
 
             if rise_section:
-                cls_prev = temp_classifiers[training_time_step-2]
-                cls_this = temp_classifiers[training_time_step-1]
-                cls_next = temp_classifiers[training_time_step]
+                probs_per_time = []
+                text_per_time = []
+                timestep_per_time = []
 
-                element_prev = random_example[training_time_step-2,:].reshape(1,-1)
-                element_this = random_example[training_time_step-1,:].reshape(1,-1)
-                element_next = random_example[training_time_step,:].reshape(1,-1)
+                for delta in range(time_delta+1, -1, -1):
+                    this_text = random_text[training_time_step-time_delta]
+                    this_idx = vocabulary.index(this_text)
 
-                prev_prob = cls_prev[this_idx].predict_proba(element_prev)[:,1]
-                this_prob = cls_this[this_idx].predict_proba(element_this)[:,1]
-                next_prob = cls_next[this_idx].predict_proba(element_next)[:,1]
+                    cls_t = temp_classifiers[training_time_step - delta]
+                    element_t = random_example[training_time_step - delta,:].reshape(1,-1)
+                    probs_per_time.append(cls_t[this_idx].predict_proba(element_t)[:,1])
+                    text_per_time.append(this_text)
+                    if time_delta - (delta) == -1:
+                        timestep_per_time.append('t-1')
+                    elif time_delta - (delta) == 0:
+                        timestep_per_time.append('t')
+                    else:
+                        timestep_per_time.append('t+'+str(time_delta - (delta)))
 
-                rise_df['Probability'].extend([prev_prob, this_prob, next_prob])
-                rise_df['Timestep'].extend(['t-1','t','t+1'])
-                rise_df['Character'].extend([this_text,this_text,this_text])
+                # cls_prev = temp_classifiers[training_time_step-2]
+                # cls_this = temp_classifiers[training_time_step-1]
+                # cls_next = temp_classifiers[training_time_step]
+
+                # element_prev = random_example[training_time_step-2,:].reshape(1,-1)
+                # element_this = random_example[training_time_step-1,:].reshape(1,-1)
+                # element_next = random_example[training_time_step,:].reshape(1,-1)
+
+                # prev_prob = cls_prev[this_idx].predict_proba(element_prev)[:,1]
+                # this_prob = cls_this[this_idx].predict_proba(element_this)[:,1]
+                # next_prob = cls_next[this_idx].predict_proba(element_next)[:,1]
+
+                # rise_df['Probability'].extend([prev_prob, this_prob, next_prob])
+                # rise_df['Timestep'].extend(['t-1','t','t+1'])
+                # rise_df['Character'].extend([this_text,this_text,this_text])
+
+                rise_df['Probability'].extend(probs_per_time)
+                rise_df['Timestep'].extend(timestep_per_time)
+                rise_df['Character'].extend(text_per_time)
             else:
-                cls_prev = temp_classifiers[training_time_step-2]
-                cls_this = temp_classifiers[training_time_step-1]
-                cls_next = temp_classifiers[training_time_step]
+                # print('FALL')
+                if training_time_step + time_delta >= len(random_text):
+                    break
+                
+                this_text = random_text[training_time_step+time_delta]
+                this_idx = vocabulary.index(this_text)
 
-                element_prev = random_example[training_time_step-2,:].reshape(1,-1)
-                element_this = random_example[training_time_step-1,:].reshape(1,-1)
-                element_next = random_example[training_time_step,:].reshape(1,-1)
-
-                prev_prob = cls_prev[this_idx].predict_proba(element_prev)[:,1]
-                this_prob = cls_this[this_idx].predict_proba(element_this)[:,1]
-                next_prob = cls_next[this_idx].predict_proba(element_next)[:,1]
-
-                fall_df['Probability'].extend([prev_prob, this_prob, next_prob])
-                fall_df['Timestep'].extend(['t-1','t','t+1'])
-                fall_df['Character'].extend([this_text,this_text,this_text])
-
+                probs_per_time = []
+                text_per_time = []
+                timestep_per_time = []
+                for delta in range(0, time_delta+2):
+                    if delta + training_time_step >= len(temp_classifiers):
+                        continue
+                    cls_t = temp_classifiers[training_time_step + delta]
+                    element_t = random_example[training_time_step + delta,:].reshape(1,-1)
+                    probs_per_time.append(cls_t[this_idx].predict_proba(element_t)[:,1])
+                    text_per_time.append(this_text)
+                    if time_delta - (delta) == -1:
+                        timestep_per_time.append('t+1')
+                    elif time_delta - (delta) == 0:
+                        timestep_per_time.append('t')
+                    else:
+                        timestep_per_time.append('t-'+str(time_delta - (delta)))
+                fall_df['Probability'].extend(probs_per_time)
+                fall_df['Timestep'].extend(timestep_per_time)
+                fall_df['Character'].extend(text_per_time)
+    # import pdb; pdb.set_trace()
+    
     rise_df = pd.DataFrame(rise_df)
     fall_df = pd.DataFrame(fall_df)
 
@@ -248,7 +287,7 @@ def generate_observation_probability_graph(elements, temp_classifiers, K):
     plt.ylabel('Probability')
     # plt.xticks(range(len(probabilities)), random_text)
     # plt.legend()
-    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_rise_all.png')
+    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_rise_all_'+str(args.time_delta)+'_'+name_modifier+'.png')
     plt.close()
 
     sns.pointplot(x='Timestep',y='Probability', hue='Character', data=rise_df)
@@ -257,7 +296,7 @@ def generate_observation_probability_graph(elements, temp_classifiers, K):
     plt.ylabel('Probability')
     # plt.xticks(range(len(probabilities)), random_text)
     plt.legend()
-    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_rise_char.png')
+    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_rise_char_'+str(args.time_delta)+'_'+name_modifier+'.png')
     plt.close()
 
     sns.pointplot(x='Timestep',y='Probability',data=fall_df)
@@ -266,7 +305,7 @@ def generate_observation_probability_graph(elements, temp_classifiers, K):
     plt.ylabel('Probability')
     # plt.xticks(range(len(probabilities)), random_text)
     # plt.legend()
-    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_fall_all.png')
+    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_fall_all_'+str(args.time_delta)+'_'+name_modifier+'.png')
     plt.close()
 
     sns.pointplot(x='Timestep',y='Probability', hue='Character', data=fall_df)
@@ -275,7 +314,7 @@ def generate_observation_probability_graph(elements, temp_classifiers, K):
     plt.ylabel('Probability')
     # plt.xticks(range(len(probabilities)), random_text)
     plt.legend()
-    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_fall_char.png')
+    plt.savefig('results/'+args.model_type+'_'+args.data_location+'_fall_char_'+str(args.time_delta)+'_'+name_modifier+'.png')
     plt.close()
 
 
@@ -330,18 +369,18 @@ model = GatedGRU(input_size = len(vocabulary),
                  embedding_size = args.embedding_size,
                  hidden_size = args.hidden_size,
                  output_size = len(vocabulary))
-model.load_state_dict(torch.load(args.model_directory+'/'+args.base_name+'_4.mdl_epoch_2990'))
+model.load_state_dict(torch.load(args.model_directory+'/'+args.base_name+'_'+str(args.model_id)+'.mdl'))
 model.eval()
 
 test_batch_size = 1
 training_percent = .9
-for dataset_number in range(5,6):
+for dataset_number in range(args.time_delta+3,11):
     print('L'+str(dataset_number))
 
     ingestion_numbers = []
-
+# 
     # loading dataset
-    dataset = Dataset('datasets/L'+str(dataset_number)+'/'+args.dataset_file, args.vocabulary_file, 0, test_batch_size, seed=1111)
+    dataset = Dataset('datasets/L'+str(dataset_number)+'/'+args.dataset_file, args.vocabulary_file, 0.6, test_batch_size, seed=args.model_id)
 
     # getting data
     dataset_hiddens = []
@@ -490,12 +529,13 @@ for dataset_number in range(5,6):
 
         # Each line of dataset K has 2K chars (explicit) or 2K-1 chars (implicit)
         temporal_classifiers = []
-
+        print('Average Accuracies over time')
         for timestep in range(relevant_data.shape[1]):
             training_x = relevant_data[training_set,timestep,:]
             testing_x = relevant_data[testing_set,timestep,:]
 
             timestep_classifiers = []
+            timestep_accuracies = []
             for vocab_idx, vocab_char in enumerate(vocabulary):
                 training_y = np.array(dataset_temporal_presence[timestep][vocab_char])[training_set]
                 testing_y = np.array(dataset_temporal_presence[timestep][vocab_char])[testing_set]
@@ -510,17 +550,18 @@ for dataset_number in range(5,6):
                     cls.fit(training_x, training_y)
 
                     accuracy = cls.score(testing_x, testing_y)
-                    print('Timestep '+ str(timestep) +' Character '+vocab_char + ' Test Accuracy: ',accuracy)
-
+                    # print('Timestep '+ str(timestep) +' Character '+vocab_char + ' Test Accuracy: ',accuracy)
+                    timestep_accuracies.append(accuracy)
                     timestep_classifiers.append(cls)
                 except:
                     timestep_classifiers.append(None)
 
             temporal_classifiers.append(timestep_classifiers)
+            print(str(np.array(timestep_accuracies).mean()))
 
             # training_y = np.array(dataset_temporal_classification[timestep])
 
-        generate_observation_probability_graph(relevant_data, temporal_classifiers, K = dataset_number)
+        generate_observation_probability_graph(relevant_data, temporal_classifiers, K = dataset_number, time_delta = args.time_delta, name_modifier=str(dataset_number))
         # generate_temp_probability_graph(relevant_data, temporal_classifiers)
 
     if args.graphs == 'character':
