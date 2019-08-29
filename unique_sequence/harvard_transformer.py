@@ -252,11 +252,12 @@ class Batch:
         # import pdb; pdb.set_trace()
         if trg is not None:
             self.trg = trg
-            # self.trg = trg[:, :-1]
-            # self.trg_y = trg[:, 1:]
-            # self.trg_mask = \
-            #     self.make_std_mask(self.trg, pad)
-            # self.ntokens = (self.trg_y != pad).data.sum()
+            # self.trg_mask = torch.ones(trg.shape)
+            self.trg = trg[:, :-1]
+            self.trg_y = trg[:, 1:]
+            self.trg_mask = \
+                self.make_std_mask(self.trg, pad)
+            self.ntokens = (self.trg != pad).data.sum()
             # pdb.set_trace()
     
     @staticmethod
@@ -274,19 +275,26 @@ def run_epoch(data_iter, model, loss_compute):
     total_loss = 0
     tokens = 0
     for i, batch in enumerate(data_iter):
+        
         out = model.forward(batch.src, batch.trg, 
                             batch.src_mask, batch.trg_mask)
-
+        
         loss = loss_compute(out, batch.trg, batch.ntokens)
+        # import pdb; pdb.set_trace()
         total_loss += loss
         total_tokens += batch.ntokens
         tokens += batch.ntokens
         if i % 50 == 1:
-            elapsed = time.time() - start
+            # print('PRINTING')
+            # import pdb; pdb.set_trace()
+            elapsed = time.time() - start + 0.00001
             print("Epoch Step: %d Loss: %f Tokens per Sec: %f" %
                     (i, loss / batch.ntokens, tokens / elapsed))
+            # import pdb; pdb.set_trace()
             start = time.time()
             tokens = 0
+            # print('DONE')
+    # import pdb; pdb.set_trace()
     return total_loss / total_tokens
 
 class NoamOpt:
@@ -328,11 +336,14 @@ class SimpleLossCompute:
         self.opt = opt
         
     def __call__(self, x, y, norm):
+        # import pdb; pdb.set_trace()
         x = self.generator(x)
+        # pdb.set_trace()
         loss = self.criterion(x.contiguous().view(-1, x.size(-1)), 
                               y.contiguous().view(-1)) / norm
+        # pdb.set_trace()
         loss.backward()
         if self.opt is not None:
             self.opt.step()
             self.opt.optimizer.zero_grad()
-        return loss.data[0] * norm
+        return loss.item() * norm

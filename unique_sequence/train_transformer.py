@@ -18,19 +18,19 @@ if not os.path.exists('models'):
 parser = argparse.ArgumentParser(description='Trains a GRU model on the arithmetic language dataset')
 
 # dataset information
-parser.add_argument('--dataset_file',type=str, default=None,
+parser.add_argument('--dataset_file',type=str, default="ten_tokens_explicit_singular_data.txt",
                     help='File that contains the full dataset from which we will take the training and test data.')
 parser.add_argument('--training_percent',type=float,
                     default=0.6,
                     help='Percent of data that is to be used as training.')
 parser.add_argument('--batch_size',type=int,
-                    default=2,
+                    default=24,
                     help='Batch size for the dataset')
 parser.add_argument('--num_batches',type=int,
-                    default=2,
+                    default=100,
                     help='Batch size for the dataset')
 parser.add_argument('--vocabulary_file',type=str,
-                    default='datasets/ten_tokens.txt',
+                    default='datasets/ten_tokens_explicit.txt',
                     help='File containing each possible word in the training set.')
 parser.add_argument('--dataset_seed',type=int,
                     default=None,
