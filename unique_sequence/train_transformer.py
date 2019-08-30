@@ -89,9 +89,9 @@ def data_generator(vocabulary, batch_size, num_batches, Ks=[2,4,5,7]):
             for padding_char in range(20 - len(training_sequence)):
                 src.append(pad)
 
-            tgt = [vocabulary.index(target)]
-            for padding_char in range(20 - len(tgt)):
-                tgt.append(pad)
+            tgt = [pad, vocabulary.index(target)]
+            # for padding_char in range(20 - len(tgt)):
+            #     tgt.append(pad)
 
             srcs.append(src)
             tgts.append(tgt)
@@ -117,12 +117,17 @@ criterion = nn.CrossEntropyLoss()
 
 model_opt = tr.NoamOpt(model.src_embed[0].d_model, 1, 400,
         torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
+print('Training Transformer')
 for epoch in range(args.num_epochs):
     model.train()
     tr.run_epoch(data_generator(vocabulary, args.batch_size, args.num_batches), \
                 model, \
               tr.SimpleLossCompute(model.generator, criterion, model_opt))
-    model.eval()
-    print(tr.run_epoch(data_generator(vocabulary, args.batch_size, 1), \
-                model, \
-              tr.SimpleLossCompute(model.generator, criterion, None)))
+    
+    if (epoch + 1) % args.print_frequency == 0:
+        print('Epoch::'+str(epoch+1))
+        model.eval()
+        print(tr.run_epoch(data_generator(vocabulary, args.batch_size, 1), \
+                    model, \
+                  tr.SimpleLossCompute(model.generator, criterion, None)))
+        torch.save(model.state_dict(), args.model_save)

@@ -252,13 +252,16 @@ class Batch:
         # import pdb; pdb.set_trace()
         if trg is not None:
             self.trg = trg
-            # self.trg_mask = torch.ones(trg.shape)
+            self.ntokens = (self.trg != pad).data.sum()
+
+            self.trg_mask = torch.ones(trg.shape)
             self.trg = trg[:, :-1]
             self.trg_y = trg[:, 1:]
             self.trg_mask = \
                 self.make_std_mask(self.trg, pad)
-            self.ntokens = (self.trg != pad).data.sum()
-            # pdb.set_trace()
+            self.ntokens = (self.trg_y != pad).data.sum()
+
+            # import pdb; pdb.set_trace()
     
     @staticmethod
     def make_std_mask(tgt, pad):
@@ -279,23 +282,26 @@ def run_epoch(data_iter, model, loss_compute):
         out = model.forward(batch.src, batch.trg, 
                             batch.src_mask, batch.trg_mask)
         
-        loss = loss_compute(out, batch.trg, batch.ntokens)
+        loss = loss_compute(out, batch.trg_y, batch.ntokens)
+        # loss = loss_compute(out, batch.trg_y, batch.ntokens)
         # import pdb; pdb.set_trace()
         total_loss += loss
         total_tokens += batch.ntokens
-        tokens += batch.ntokens
+        tokens += batch.ntokens + 0.00001
         if i % 50 == 1:
             # print('PRINTING')
             # import pdb; pdb.set_trace()
             elapsed = time.time() - start + 0.00001
-            print("Epoch Step: %d Loss: %f Tokens per Sec: %f" %
-                    (i, loss / batch.ntokens, tokens / elapsed))
+            # print("Epoch Step: %d Loss: %f Tokens per Sec: %f" %
+                    # (i, loss / batch.ntokens, tokens / elapsed))
+            # print("Epoch Step: %d Loss: %f Tokens per Sec: %f" %
+                    # (i, loss , tokens ))
             # import pdb; pdb.set_trace()
             start = time.time()
             tokens = 0
             # print('DONE')
     # import pdb; pdb.set_trace()
-    return total_loss / total_tokens
+    return total_loss / total_tokens.item()
 
 class NoamOpt:
     "Optim wrapper that implements rate."
@@ -341,9 +347,26 @@ class SimpleLossCompute:
         # pdb.set_trace()
         loss = self.criterion(x.contiguous().view(-1, x.size(-1)), 
                               y.contiguous().view(-1)) / norm
-        # pdb.set_trace()
+        # import pdb; pdb.set_trace()
         loss.backward()
         if self.opt is not None:
             self.opt.step()
             self.opt.optimizer.zero_grad()
-        return loss.item() * norm
+        # import pdb; pdb.set_trace()
+        return loss.item() * norm.item()
+
+def greedy_decode(model, src, src_mask, max_len, start_symbol):
+    memory = model.encode(src, src_mask)
+    ys = torch.ones(1, 1).fill_(start_symbol).type_as(src.data)
+    for i in range(max_len-1):
+        out = model.decode(memory, src_mask, 
+                           Variable(ys), 
+                           Variable(subsequent_mask(ys.size(1))
+                                    .type_as(src.data)))
+        prob = model.generator(out[:, -1])
+        _, next_word = torch.max(prob, dim = 1)
+        next_word = next_word.data[0]
+        ys = torch.cat([ys, 
+                        torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=1)
+    return ys
+
