@@ -44,9 +44,11 @@ parser.add_argument('--transition_type',type=str,
 
 
 # model information
-parser.add_argument('--embedding_size',type=int, default=2,
-                    help='The dimension of the model embedding')
-parser.add_argument('--hidden_size',type=int, default=15,
+parser.add_argument('--num_layers',type=int, default=2,
+                    help='The dimension of the model layers')
+parser.add_argument('--num_heads',type=int, default=2,
+                    help='The dimension of the model heads')
+parser.add_argument('--hidden_size',type=int, default=16,
                     help='The dimension of the model hidden state')
 parser.add_argument('--model_save',type=str, default=None,
                     help='File name to which we will save the model.')
@@ -110,8 +112,8 @@ def data_generator(vocabulary, batch_size, num_batches, Ks=[2,4,5,7]):
 # import pdb; pdb.set_trace()
 model = tr.make_transformer(src_vocab=len(vocabulary)+1, \
                         tgt_vocab=len(vocabulary)+1, \
-                        N=1, \
-                        d_model=16, d_ff=64, h=2, dropout=0.0)
+                        N=args.num_layers, \
+                        d_model=args.hidden_size, d_ff=4*args.hidden_size, h=args.num_heads, dropout=0.0)
 
 criterion = nn.CrossEntropyLoss()
 

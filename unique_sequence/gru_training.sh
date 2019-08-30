@@ -13,7 +13,7 @@ VOCAB_FILE=$5
 
 singularity exec -B /om/group/cpl -B "$PROJECT_PATH" "$SINGULARITY_IMG" python3 train_GRU.py \
 		--model_save "alphabet_models/${BASE_NAME}_${MODEL_ID}.mdl" \
-		--num_epochs ${NUM_EPOCHS} > "alphabet_models/training_${BASE_NAME}_${MODEL_ID}.txt"\
+		--num_epochs ${NUM_EPOCHS} \
 		--dataset_file ${DATASET} \
 		--vocabulary_file ${VOCAB_FILE} \
-		--dataset_seed ${MODEL_ID}
+		--dataset_seed ${MODEL_ID} > "alphabet_models/training_${BASE_NAME}_${MODEL_ID}.txt"

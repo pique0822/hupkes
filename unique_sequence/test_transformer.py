@@ -48,7 +48,7 @@ def data_sample(vocabulary, Ks=[2,4,5,7]):
 
 model = tr.make_transformer(src_vocab=len(vocabulary)+1, \
                         tgt_vocab=len(vocabulary)+1, \
-                        N=1, \
+                        N=2, \
                         d_model=16, d_ff=64, h=2, dropout=0.0)
 model.load_state_dict(torch.load('test.mdl'))
 model.eval()
