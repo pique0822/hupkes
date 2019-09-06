@@ -84,7 +84,8 @@ class SublayerConnection(nn.Module):
 
     def forward(self, x, sublayer):
         "Apply residual connection to any sublayer with the same size."
-        return x + self.dropout(sublayer(self.norm(x)))
+        sublayer_out = self.dropout(sublayer(self.norm(x)))
+        return x + sublayer_out, sublayer_out
 
 class EncoderLayer(nn.Module):
     "Encoder is made up of self-attn and feed forward (defined below)"
@@ -95,10 +96,18 @@ class EncoderLayer(nn.Module):
         self.sublayer = clones(SublayerConnection(size, dropout), 2)
         self.size = size
 
+        self.self_attn_out = None
+        self.feed_forward_out = None
+
+
     def forward(self, x, mask):
-        "Follow Figure 1 (left) for connections."
-        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
-        return self.sublayer[1](x, self.feed_forward)
+        "Follow Figure 1 (left) for connections." 
+        x, slf_attn = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
+        x, ffn = self.sublayer[1](x, self.feed_forward)
+        
+        self.self_attn_out = slf_attn
+        self.feed_forward_out = ffn
+        return x
 
 class Decoder(nn.Module):
     "Generic N layer decoder with masking."
@@ -121,14 +130,22 @@ class DecoderLayer(nn.Module):
         self.src_attn = src_attn
         self.feed_forward = feed_forward
         self.sublayer = clones(SublayerConnection(size, dropout), 3)
+
+        self.self_attn_out = None
+        self.src_attn_out = None
+        self.feed_forward_out = None
  
     def forward(self, x, memory, src_mask, tgt_mask):
         "Follow Figure 1 (right) for connections."
         m = memory
-        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, tgt_mask))
-        x = self.sublayer[1](x, lambda x: self.src_attn(x, m, m, src_mask))
-        return self.sublayer[2](x, self.feed_forward)
+        x, slf_attn = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, tgt_mask))
+        x, src_attn = self.sublayer[1](x, lambda x: self.src_attn(x, m, m, src_mask))
+        x, ffn = self.sublayer[2](x, self.feed_forward)
 
+        self.self_attn_out = slf_attn
+        self.feed_forward_out = ffn
+        self.src_attn_out = src_attn
+        return x
 def subsequent_mask(size):
     "Mask out subsequent positions."
     attn_shape = (1, size, size)
@@ -157,6 +174,7 @@ class MultiHeadedAttention(nn.Module):
         self.h = h
         self.linears = clones(nn.Linear(d_model, d_model), 4)
         self.attn = None
+        self.projected_vectors = None
         self.dropout = nn.Dropout(p=dropout)
         
     def forward(self, query, key, value, mask=None):
@@ -174,10 +192,14 @@ class MultiHeadedAttention(nn.Module):
         # 2) Apply attention on all the projected vectors in batch. 
         x, self.attn = attention(query, key, value, mask=mask, 
                                  dropout=self.dropout)
+
+
         
         # 3) "Concat" using a view and apply a final linear. 
         x = x.transpose(1, 2).contiguous() \
              .view(nbatches, -1, self.h * self.d_k)
+
+        self.projected_vectors = x
         return self.linears[-1](x)
 
 class PositionwiseFeedForward(nn.Module):
@@ -355,7 +377,7 @@ class SimpleLossCompute:
         # import pdb; pdb.set_trace()
         return loss.item() * norm.item()
 
-def greedy_decode(model, src, src_mask, max_len, start_symbol):
+def greedy_decode(model, src, src_mask, max_len, start_symbol, verbose=False):
     memory = model.encode(src, src_mask)
     ys = torch.ones(1, 1).fill_(start_symbol).type_as(src.data)
     for i in range(max_len-1):
@@ -368,5 +390,7 @@ def greedy_decode(model, src, src_mask, max_len, start_symbol):
         next_word = next_word.data[0]
         ys = torch.cat([ys, 
                         torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=1)
+    if verbose:
+        return ys, prob, out
     return ys
 

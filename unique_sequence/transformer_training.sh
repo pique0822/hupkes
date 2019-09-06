@@ -15,8 +15,7 @@ NUM_HEADS=$7
 HIDDEN_SIZE=$8
 
 singularity exec -B /om/group/cpl -B "$PROJECT_PATH" "$SINGULARITY_IMG" python3 train_transformer.py \
-		--model_save "${BASE_NAME}_${MODEL_ID}_H${NUM_HEADS}_L${NUM_LAYERS}_S{HIDD
-	}.mdl" \
+		--model_save "${BASE_NAME}_${MODEL_ID}_H${NUM_HEADS}_L${NUM_LAYERS}_S{HIDDEN_SIZE}.mdl" \
 		--num_epochs ${NUM_EPOCHS} \
 		--num_layers ${NUM_LAYERS} \
 		--num_heads ${NUM_HEADS} \
